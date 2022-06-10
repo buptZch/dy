@@ -58,5 +58,5 @@ func (s *CheckUserService) CheckUser(req *userbase.CheckUserRequest) (int64, err
 	if u.Password != passWord {
 		return 0, errno.LoginErr
 	}
-	return int64(u.ID), nil
+	return u.UserId, nil
 }

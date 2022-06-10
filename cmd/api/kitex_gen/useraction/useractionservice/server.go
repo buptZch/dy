@@ -2,7 +2,7 @@
 package useractionservice
 
 import (
-	"dy/cmd/user_action/kitex_gen/useraction"
+	"dy/cmd/api/kitex_gen/useraction"
 	"github.com/cloudwego/kitex/server"
 )
 

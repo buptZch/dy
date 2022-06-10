@@ -3,7 +3,7 @@
 package userbaseservice
 
 import (
-	"dy/cmd/user_base/kitex_gen/userbase"
+	"dy/cmd/api/kitex_gen/userbase"
 	"github.com/cloudwego/kitex/server"
 )
 

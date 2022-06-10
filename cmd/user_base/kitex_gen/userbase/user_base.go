@@ -290,6 +290,7 @@ func (p *BaseResp) Field3DeepEqual(src int64) bool {
 type CreateUserRequest struct {
 	UserName string `thrift:"user_name,1" json:"user_name"`
 	Password string `thrift:"password,2" json:"password"`
+	UserId   int64  `thrift:"user_id,3" json:"user_id"`
 }
 
 func NewCreateUserRequest() *CreateUserRequest {
@@ -303,16 +304,24 @@ func (p *CreateUserRequest) GetUserName() (v string) {
 func (p *CreateUserRequest) GetPassword() (v string) {
 	return p.Password
 }
+
+func (p *CreateUserRequest) GetUserId() (v int64) {
+	return p.UserId
+}
 func (p *CreateUserRequest) SetUserName(val string) {
 	p.UserName = val
 }
 func (p *CreateUserRequest) SetPassword(val string) {
 	p.Password = val
 }
+func (p *CreateUserRequest) SetUserId(val int64) {
+	p.UserId = val
+}
 
 var fieldIDToName_CreateUserRequest = map[int16]string{
 	1: "user_name",
 	2: "password",
+	3: "user_id",
 }
 
 func (p *CreateUserRequest) Read(iprot thrift.TProtocol) (err error) {
@@ -347,6 +356,16 @@ func (p *CreateUserRequest) Read(iprot thrift.TProtocol) (err error) {
 		case 2:
 			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField2(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		case 3:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else {
@@ -402,6 +421,15 @@ func (p *CreateUserRequest) ReadField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *CreateUserRequest) ReadField3(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		p.UserId = v
+	}
+	return nil
+}
+
 func (p *CreateUserRequest) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
 	if err = oprot.WriteStructBegin("CreateUserRequest"); err != nil {
@@ -414,6 +442,10 @@ func (p *CreateUserRequest) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField2(oprot); err != nil {
 			fieldId = 2
+			goto WriteFieldError
+		}
+		if err = p.writeField3(oprot); err != nil {
+			fieldId = 3
 			goto WriteFieldError
 		}
 
@@ -469,6 +501,23 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
+func (p *CreateUserRequest) writeField3(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 3); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.UserId); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
+}
+
 func (p *CreateUserRequest) String() string {
 	if p == nil {
 		return "<nil>"
@@ -488,6 +537,9 @@ func (p *CreateUserRequest) DeepEqual(ano *CreateUserRequest) bool {
 	if !p.Field2DeepEqual(ano.Password) {
 		return false
 	}
+	if !p.Field3DeepEqual(ano.UserId) {
+		return false
+	}
 	return true
 }
 
@@ -501,6 +553,13 @@ func (p *CreateUserRequest) Field1DeepEqual(src string) bool {
 func (p *CreateUserRequest) Field2DeepEqual(src string) bool {
 
 	if strings.Compare(p.Password, src) != 0 {
+		return false
+	}
+	return true
+}
+func (p *CreateUserRequest) Field3DeepEqual(src int64) bool {
+
+	if p.UserId != src {
 		return false
 	}
 	return true

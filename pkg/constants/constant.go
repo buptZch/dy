@@ -9,7 +9,7 @@ const (
 	VideoTableName   = "video"
 	//jwt插件变量
 	SecretKey   = "secret key"
-	IdentityKey = "id"
+	IdentityKey = "user_id"
 	//gorm查询时用到的参数(api接口返回的字段名）
 	//Total  = "total"
 	//Notes  = "notes"

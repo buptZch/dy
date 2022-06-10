@@ -11,6 +11,7 @@ struct BaseResp {
 struct CreateUserRequest {
     1:string user_name
     2:string password
+    3:i64 user_id
 }
 
 struct CreateUserResponse {

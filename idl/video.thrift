@@ -38,8 +38,9 @@ struct GetFeedResponse {
 }
 
 struct PublishActionRequest {
-  1:binary data
-  2:string title
+  1:i64 user_id
+  2:binary data
+  3:string title
 }
 
 struct PublishActionResponse {

@@ -19,12 +19,10 @@ import (
 	"context"
 
 	"dy/pkg/constants"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	//gorm.Model
 	UserId   int64  `json:"user_id"`
 	UserName string `json:"user_name"`
 	Password string `json:"user_pwd"`

@@ -3,7 +3,7 @@
 package videoservice
 
 import (
-	"dy/cmd/video/kitex_gen/video"
+	"dy/cmd/api/kitex_gen/video"
 	"github.com/cloudwego/kitex/server"
 )
 

@@ -4,7 +4,7 @@ package userbaseservice
 
 import (
 	"context"
-	"dy/cmd/user_base/kitex_gen/userbase"
+	"dy/cmd/api/kitex_gen/userbase"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/client/callopt"
 )

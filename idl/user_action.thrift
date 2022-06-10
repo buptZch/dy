@@ -1,4 +1,3 @@
-
 namespace go useraction
 
 struct BaseResp {
@@ -16,7 +15,7 @@ struct User {
 }
 
 struct GetUserRequest{
-  1:string user_id
+  1:i64 user_id
 }
 
 struct GetUserResponse{
@@ -73,7 +72,7 @@ struct Comment{
 
 struct CommentActionRequest{
   1:i64 user_id
-  2:string video_id
+  2:i64 video_id
   3:string action_type
   4:string comment_text
   5:i64 comment_id
@@ -94,8 +93,8 @@ struct CommentListResponse{
 }
 
 struct RelationActionRequest{
-  1:string user_id
-  2:string to_user_id
+  1:i64 user_id
+  2:i64 to_user_id
   3:i32 action_type
 }
 
@@ -104,7 +103,7 @@ struct RelationActionResponse{
 }
 
 struct RelationFollowListRequest{
-  1:string user_id
+  1:i64 user_id
 }
 
 struct RelationFollowListResponse{
@@ -113,7 +112,7 @@ struct RelationFollowListResponse{
 }
 
 struct RelationFollowerListRequest{
-  1:string user_id
+  1:i64 user_id
 }
 
 struct RelationFollowerListResponse{
