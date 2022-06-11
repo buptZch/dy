@@ -25,7 +25,7 @@ type User struct {
 	//gorm.Model
 	UserId   int64  `json:"user_id"`
 	UserName string `json:"user_name"`
-	Password string `json:"user_pwd"`
+	Password string `json:"password"`
 }
 
 func (u *User) TableName() string {
