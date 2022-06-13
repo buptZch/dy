@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"dy/cmd/api/kitex_gen/video"
+	"mime/multipart"
 	"net/http"
 
 	"dy/pkg/errno"
@@ -249,9 +250,9 @@ func SendFeedResponse(c *gin.Context, vList []*video.Video, err error) {
 }
 
 type PublishActionRequest struct {
-	data  []byte `json:"data" form:"data"`
-	Token string `json:"token" form:"token"`
-	Title string `json:"title" form:"title"`
+	data  *multipart.FileHeader `json:"data" form:"data"`
+	Token string                `json:"token" form:"token"`
+	Title string                `json:"title" form:"title"`
 }
 
 type PublishActionResponse struct {

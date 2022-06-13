@@ -68,8 +68,8 @@ func main() {
 	r.GET("/douyin/user/", handlers.GetUser)
 	v1 := r.Group("/douyin")
 	publish1 := v1.Group("/publish")
-	publish1.GET("/list", handlers.GetPublishVideo)
-	publish1.POST("/action", handlers.PublishAction)
+	publish1.GET("/list/", handlers.GetPublishVideo)
+	publish1.POST("/action/", handlers.PublishAction)
 
 	favorite1 := v1.Group("/favorite")
 	favorite1.POST("/action/", handlers.FavoriteAction)

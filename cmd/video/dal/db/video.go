@@ -16,6 +16,8 @@
 package db
 
 import (
+	"os"
+
 	"bytes"
 	"context"
 	"dy/cmd/video/kitex_gen/video"
@@ -25,7 +27,7 @@ import (
 	"github.com/disintegration/imaging"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io/ioutil"
-	"os"
+	"strconv"
 	"time"
 )
 
@@ -65,7 +67,7 @@ type Follow struct {
 	ToUserID   int64 `json:"to_user_id"`
 }
 
-const srcpath = "../../src"
+const srcpath = "../../src/"
 
 func (v *Video) TableName() string {
 	return constants.VideoTableName
@@ -247,41 +249,42 @@ func MGetUser(ctx context.Context, userID int64) (string, error) {
 //上传视频
 func UploadVideo(ctx context.Context, data []byte, id int64, videoId int64, title string) (bool, error) {
 
-	var unixTime int64 = time.Now().Unix()
+	var unixTime = time.Now().Unix()
 	var (
-		fileName = string(id) + string(unixTime) + ".mp4"
+		fileName = strconv.FormatInt(id, 10) + strconv.FormatInt(unixTime, 10) + ".mp4"
 		content  = data
 		err      error
 	)
-	klog.Errorf("filename:", fileName)
-	if err = ioutil.WriteFile(srcpath+fileName, []byte(content), 0666); err != nil {
+	//klog.Errorf("data:", len(data))
+	if err = ioutil.WriteFile(srcpath+fileName, content, 0666); err != nil {
 		fmt.Println("Writefile Error =", err)
 		return false, err
 	}
 	buf := bytes.NewBuffer(nil)
-	err = ffmpeg.Input(fileName).
+	err = ffmpeg.Input(srcpath+fileName).
 		Filter("select", ffmpeg.Args{fmt.Sprintf("gte(n,%d)", 1)}).
 		Output("pipe:", ffmpeg.KwArgs{"vframes": 1, "format": "image2", "vcodec": "mjpeg"}).
 		WithOutput(buf, os.Stdout).
 		Run()
 	if err != nil {
+		klog.Errorf("ffmpeg:", err)
 		return false, err
 	}
 	img, err := imaging.Decode(buf)
 	if err != nil {
 		return false, err
 	}
-	imgName := string(id) + string(unixTime) + ".jpg"
+	imgName := strconv.FormatInt(id, 10) + strconv.FormatInt(unixTime, 10) + ".jpg"
 	klog.Errorf("imgUrl", srcpath+imgName)
 	err = imaging.Save(img, srcpath+imgName)
 	if err != nil {
 		return false, err
 	}
-	ip := "10.112.197.219:8001/"
+	ip := "http://10.112.197.219:8001/"
 	videoInstance := Video{
 		VideoId:    videoId,
 		UserId:     id,
-		PlayUrl:    fileName,
+		PlayUrl:    ip + fileName,
 		Title:      title,
 		CoverUrl:   ip + imgName,
 		CreateDate: unixTime,
