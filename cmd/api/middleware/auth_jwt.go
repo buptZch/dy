@@ -2,15 +2,14 @@ package jwt
 
 import (
 	"crypto/rsa"
-	"dy/cmd/api/handlers"
 	"dy/cmd/api/kitex_gen/userbase"
 	"dy/cmd/api/rpc"
 	"dy/pkg/constants"
 	"dy/pkg/errno"
 	"errors"
+	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/kitex/pkg/klog"
-	"github.com/gin-gonic/gin/binding"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -335,7 +334,7 @@ func (mw *GinJWTMiddleware) MiddlewareInit() error {
 
 	if mw.Unauthorized == nil {
 		mw.Unauthorized = func(c *gin.Context, code int, message string, userId int64, token string) {
-			c.JSON(http.StatusOK, handlers.UserBaseResponse{
+			c.JSON(http.StatusOK, UserBaseResponse{
 				Code:    int64(code),
 				Message: message,
 				UserId:  userId,
@@ -357,7 +356,7 @@ func (mw *GinJWTMiddleware) MiddlewareInit() error {
 	if mw.RegisterResponse == nil {
 		mw.RegisterResponse = func(c *gin.Context, err error, userId int64, token string) {
 			Err := errno.ConvertErr(err)
-			c.JSON(http.StatusOK, handlers.UserBaseResponse{
+			c.JSON(http.StatusOK, UserBaseResponse{
 				Code:    Err.ErrCode,
 				Message: Err.ErrMsg,
 				UserId:  userId,
@@ -493,24 +492,55 @@ func (mw *GinJWTMiddleware) GetClaimsFromJWT(c *gin.Context) (MapClaims, error) 
 	return claims, nil
 }
 
+type UserBaseResponse struct {
+	Code    int64  `json:"status_code"`
+	Message string `json:"status_msg"`
+	UserId  int64  `json:"user_id"`
+	Token   string `json:"token"`
+}
+
+// SendResponse pack response for login/register
+func SendUserBaseResponse(c *gin.Context, err error, userId int64, token string) {
+	Err := errno.ConvertErr(err)
+	klog.Errorf("tttoken", token)
+	c.JSON(http.StatusOK, UserBaseResponse{
+		Code:    Err.ErrCode,
+		Message: Err.ErrMsg,
+		UserId:  userId,
+		Token:   token,
+	})
+}
+
+type UserParam struct {
+	UserName string `json:"user_name"`
+	PassWord string `json:"password"`
+}
+
 func (mw *GinJWTMiddleware) RegisterHandler(c *gin.Context) {
-	var registerVar handlers.UserParam
-	if err := c.ShouldBindBodyWith(&registerVar, binding.JSON); err != nil {
-		klog.Error(err)
-		handlers.SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
-		return
+	type UserParam struct {
+		UserName string `json:"user_name"`
+		PassWord string `json:"password"`
 	}
 
+	var registerVar UserParam
+	registerVar.UserName = c.Query("username")
+	registerVar.PassWord = c.Query("password")
+	//if err := c.ShouldBind(&registerVar); err != nil {
+	//	klog.Error(err)
+	//	SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
+	//	return
+	//}
+	klog.Errorf("register", registerVar)
 	if len(registerVar.UserName) == 0 || len(registerVar.PassWord) == 0 {
 		klog.Error(errno.ParamErr)
-		handlers.SendUserBaseResponse(c, errno.ParamErr, 0, "")
+		SendUserBaseResponse(c, errno.ParamErr, 0, "")
 		return
 	}
 
 	node, err := snowflake.NewNode(1)
 	if err != nil {
 		klog.Error(err)
-		handlers.SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
+		SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
 		return
 	}
 	userid := node.Generate().Int64()
@@ -521,7 +551,7 @@ func (mw *GinJWTMiddleware) RegisterHandler(c *gin.Context) {
 		UserId:   userid,
 	})
 	if err != nil {
-		handlers.SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
+		SendUserBaseResponse(c, errno.ConvertErr(err), 0, "")
 		return
 	}
 
@@ -575,7 +605,7 @@ func (mw *GinJWTMiddleware) RegisterHandler(c *gin.Context) {
 		)
 	}
 	//mw.LoginResponse(c, http.StatusOK, tokenString, expire)
-	handlers.SendUserBaseResponse(c, errno.Success, userid, tokenString)
+	SendUserBaseResponse(c, errno.Success, userid, tokenString)
 }
 
 // LoginHandler can be used by clients to get a jwt token.
@@ -632,7 +662,8 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 		)
 	}
 	//mw.LoginResponse(c, http.StatusOK, tokenString, expire)
-	handlers.SendUserBaseResponse(c, errno.Success, claims[constants.IdentityKey].(int64), tokenString)
+	klog.Errorf("token: ", tokenString)
+	SendUserBaseResponse(c, errno.Success, claims[constants.IdentityKey].(int64), tokenString)
 }
 
 // LogoutHandler can be used by clients to remove the jwt cookie (if set)
@@ -927,4 +958,32 @@ func GetToken(c *gin.Context) string {
 	}
 
 	return token.(string)
+}
+
+func VerifyToken(tokenString string) (int64, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(constants.SecretKey), nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	if token.Valid {
+		fmt.Println("You look nice today")
+		claimsMap := ExtractClaimsFromToken(token)
+		return int64(claimsMap["user_id"].(float64)), nil
+	} else if ve, ok := err.(*jwt.ValidationError); ok {
+		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+			fmt.Println("That's not even a token")
+			return 0, errno.NewErrNo(401, "That's not even a token")
+		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+			// Token is either expired or not active yet
+			fmt.Println("Timing is everything")
+			return 0, errno.NewErrNo(400, "Token is either expired or not active yet")
+		} else {
+			fmt.Println("Couldn't handle this token:", err)
+			return 0, errno.NewErrNo(401, "Couldn't handle this token")
+		}
+	} else {
+		return 0, errno.NewErrNo(401, "Couldn't handle this token")
+	}
 }

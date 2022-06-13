@@ -7,8 +7,8 @@ struct BaseResp {
 }
 
 struct User {
-  1:i64 user_id
-  2:string user_name
+  1:i64 id
+  2:string name
   3:i64 follow_count
   4:i64 follower_count
   5:optional bool is_follow
@@ -25,8 +25,8 @@ struct GetUserResponse{
 
 
 struct Video{
-  1:i64 video_id
-  2:User user
+  1:i64 id
+  2:User author
   3:string play_url
   4:string cover_url
   5:i64 favorite_count
@@ -40,7 +40,7 @@ struct PublishListRequest{
 }
 
 struct PublishListResponse{
-  1:Video video
+  1:list<Video> video_list
   2:BaseResp base_resp
 }
 
@@ -64,7 +64,7 @@ struct FavoriteListResponse{
 }
 
 struct Comment{
-  1:i64 comment_id
+  1:i64 id
   2:User user
   3:string content
   4:string create_date
@@ -73,7 +73,7 @@ struct Comment{
 struct CommentActionRequest{
   1:i64 user_id
   2:i64 video_id
-  3:string action_type
+  3:i32 action_type
   4:string comment_text
   5:i64 comment_id
 }
@@ -85,6 +85,7 @@ struct CommentActionResponse{
 
 struct CommentListRequest{
   1:i64 video_id
+  2:i64 user_id
 }
 
 struct CommentListResponse{

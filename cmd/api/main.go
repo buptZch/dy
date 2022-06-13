@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"dy/cmd/api/kitex_gen/userbase"
-	"github.com/gin-gonic/gin/binding"
+	"dy/pkg/errno"
 	"net/http"
 	"time"
 
@@ -27,8 +27,8 @@ func main() {
 	r := gin.New()
 	authMiddleware, _ := jwt.New(&jwt.GinJWTMiddleware{
 		Key:        []byte(constants.SecretKey),
-		Timeout:    time.Hour,
-		MaxRefresh: time.Hour,
+		Timeout:    time.Hour * 10000,
+		MaxRefresh: time.Hour * 10000,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(int64); ok {
 				return jwt.MapClaims{
@@ -39,8 +39,15 @@ func main() {
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			var loginVar handlers.UserParam
-			if err := c.ShouldBindBodyWith(&loginVar, binding.JSON); err != nil {
-				klog.Errorf("====%+v\n", loginVar)
+			//klog.Errorf("xxx", c.Get("user_name"))
+			//if err := c.ShouldBindBodyWith(&loginVar, binding.JSON); err != nil {
+			//	klog.Errorf("====%+v\n", loginVar)
+			//	return "", jwt.ErrMissingLoginValues
+			//}
+			loginVar.UserName = c.Query("username")
+			loginVar.PassWord = c.Query("password")
+			if len(loginVar.UserName) == 0 || len(loginVar.PassWord) == 0 {
+				klog.Error(errno.ParamErr)
 				return "", jwt.ErrMissingLoginValues
 			}
 			klog.Errorf("====%+v\n", loginVar)
@@ -56,20 +63,29 @@ func main() {
 	})
 
 	r.Use(gin.Logger())
+	r.POST("/douyin/user/login/", authMiddleware.LoginHandler)
+	r.POST("/douyin/user/register/", authMiddleware.RegisterHandler)
+	r.GET("/douyin/user/", handlers.GetUser)
 	v1 := r.Group("/douyin")
-	user1 := v1.Group("/user")
-	user1.POST("/login", authMiddleware.LoginHandler)
-	user1.POST("/register", authMiddleware.RegisterHandler)
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "mee")
-	})
-	note1 := v1.Group("/note")
-	note1.Use(authMiddleware.MiddlewareFunc())
-	//note1.GET("/query", handlers.QueryNote)
-	//note1.POST("", handlers.CreateNote)
-	//note1.PUT("/:note_id", handlers.UpdateNote)
-	//note1.DELETE("/:note_id", handlers.DeleteNote)
+	publish1 := v1.Group("/publish")
+	publish1.GET("/list", handlers.GetPublishVideo)
+	publish1.POST("/action", handlers.PublishAction)
 
+	favorite1 := v1.Group("/favorite")
+	favorite1.POST("/action/", handlers.FavoriteAction)
+	favorite1.GET("/list/", handlers.GetFavoriteList)
+
+	feed1 := v1.Group("/feed")
+	feed1.GET("/", handlers.GetFeed)
+
+	comment1 := v1.Group("/comment")
+	comment1.POST("/action/", handlers.CommentAction)
+	comment1.GET("/list/", handlers.GetCommentList)
+
+	relation1 := v1.Group("relation")
+	relation1.POST("/action/", handlers.RelationAction)
+	relation1.GET("/follow/list/", handlers.GetFollowList)
+	relation1.GET("/follower/list/", handlers.GetFollowerList)
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		klog.Fatal(err)
 	}
