@@ -38,7 +38,6 @@
 
 ```
 docker-compose up
-复制代码
 ```
 
 执行上述命令启动Etcd、Jaeger 的 docker 镜像
